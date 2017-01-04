@@ -1,0 +1,5 @@
+0x00000182 = Fensterheber
+0x000005C4 = Musik
+0x00000171 = Verriegelung
+0x00000396 = Blinker
+0x00000455 = Blinker defekt
