@@ -148,7 +148,7 @@ local tp_dt_payload = ProtoField.new("Payload", "tp20.dt.payload", ftypes.BYTES)
 --local tp_dt_length = ProtoField.new("Data Length", "tp20.dt.length", ftypes.UINT8,nil, base.DEC)
 --General
 local tp_mtype = ProtoField.new("Message Type", "tp20.mtype", ftypes.STRING)
-local tp_framenum = ProtoField.new("FrameNum", "tp20.fnum", ftypes.FRAMENUM)
+
 --
 local my_tp_20_dissector = Proto.new("tp20", "TP-2.0")
 
@@ -182,13 +182,9 @@ my_tp_20_dissector.fields = {
     tp_cp_timing_t3_scale,
     tp_cp_timing_t4,
     tp_dt_opcode,
-    --tp_dt_length,
-    --tp_dt_kwp_para,
-    --tp_dt_kwp_sid,
     tp_dt_seq_nr,
     tp_dt_payload,
-    tp_mtype,
-    tp_framenum
+    tp_mtype
 }
 
 
@@ -200,15 +196,9 @@ function my_tp_20_dissector.dissector(tvbuf,pktinfo,root)
     pktinfo.cols.protocol:set("TP-2.0")
 
     --colorize packets
-    set_color_filter_slot(1, "tp20.opcode == 0xc0 || tp20.opcode == 0xd0")
-
-    set_color_filter_slot(3, "tp20.opcode == 0xa0 || tp20.opcode == 0xa1 || tp20.opcode == 0xa3")
-
-    set_color_filter_slot(11, "tp20.opcode == 0x1")   --ack last
-    set_color_filter_slot(5, "tp20.opcode == 0x0")  --
-    set_color_filter_slot(9, "tp20.opcode == 0x2")  --last packet dark yellow
-    set_color_filter_slot(7, "tp20.opcode == 0xb")  --ack green
-    set_color_filter_slot(8, "tp20.opcode == 0xa8")  --disconnect yellow
+    set_color_filter_slot(2, "!kwp2k && (tp20.opcode == 0xc0 || tp20.opcode == 0xd0 || tp20.opcode == 0xa0 || tp20.opcode == 0xa1 || tp20.opcode == 0xa3)") --channel setup
+    set_color_filter_slot(6, "!kwp2k && tp20.opcode == 0xb")   --ack
+    set_color_filter_slot(9, "tp20.opcode == 0xa8")  --disconnect
 
     local pktlen = tvbuf:reported_length_remaining()
 
@@ -240,7 +230,6 @@ function my_tp_20_dissector.dissector(tvbuf,pktinfo,root)
 
             tree:add(tp_cs_app_type, tvbuf:range(6,1))
             tree:add(tp_mtype, "Channel Setup"):set_generated()
-            tree:add(tp_framenum, frametype.REQUEST)
             do return end
 
         end
@@ -284,16 +273,18 @@ function my_tp_20_dissector.dissector(tvbuf,pktinfo,root)
     end
 
 
-    -- packet has to be of data type (TODO check this better)
+    -- packet has to be of data type
 
     local tree = root:add(my_tp_20_dissector, tvbuf:range(0,pktlen))
     tree:add(tp_dt_opcode, tvbuf:range(0,1))
     tree:add(tp_dt_seq_nr, tvbuf:range(0,1))
-    --tree:add(tp_dt_length, tvbuf:range(2,1))
-    --tree:add(tp_dt_kwp_sid, tvbuf:range(3,1))
-    --tree:add(tp_dt_kwp_para, tvbuf:range(4,1))
-    tree:add(tp_dt_payload, tvbuf:range(2,pktlen-2))
+    tree:add(tp_dt_payload, tvbuf:range(1,pktlen-1))
     tree:add(tp_mtype, "Data Transmission"):set_generated()
+
+    local mydissectortable = DissectorTable.get("tp20")
+    mydissectortable:try(1,tvbuf:range(1,pktlen-1):tvb(),pktinfo,root)
+
 end
+
 
 DissectorTable.get("can.subdissector"):add(0, my_tp_20_dissector)
