@@ -79,7 +79,7 @@ local lines = lines_from(file)
 
 -- dissect lines to HexID and CANID and put them into table
 for n,l in pairs(lines) do
-    local split = string.split(l,"=")
+    local split = string.split(l,";")
     local can_hex_id = string:trim(split[1])
     local can_name_id = string:trim(split[2])
     id_name[can_hex_id] = can_name_id
