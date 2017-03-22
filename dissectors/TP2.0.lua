@@ -196,8 +196,8 @@ function my_tp_20_dissector.dissector(tvbuf,pktinfo,root)
     pktinfo.cols.protocol:set("TP-2.0")
 
     --colorize packets
-    set_color_filter_slot(2, "!kwp2k && (tp20.opcode == 0xc0 || tp20.opcode == 0xd0 || tp20.opcode == 0xa0 || tp20.opcode == 0xa1 || tp20.opcode == 0xa3)") --channel setup
-    set_color_filter_slot(6, "!kwp2k && tp20.opcode == 0xb")   --ack
+    set_color_filter_slot(2, "tp20.opcode == 0xc0 || tp20.opcode == 0xd0 || tp20.opcode == 0xa0 || tp20.opcode == 0xa1 || tp20.opcode == 0xa3") --channel setup
+    set_color_filter_slot(6, "tp20.opcode == 0xb")   --ack
     set_color_filter_slot(9, "tp20.opcode == 0xa8")  --disconnect
 
     local pktlen = tvbuf:reported_length_remaining()
